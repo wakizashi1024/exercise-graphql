@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Axios as GraphQL Client</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+</head>
+<body>
+    <div id="app">
+        <p>Result:</p>
+        <textarea id="result"></textarea>
+        <hr/>
+        <button id="get_all_btn">Get all articles</button>
+        <button id="get_btn">Get article</button>
+        <button id="create_btn">Create article</button>
+        <button id="update_btn">Update article</button>
+        <button id="delete_btn">Delete article</button>
+    </div>
+    <style>
+        * {
+            background-color: rgba(35, 35, 35, 0.95);
+            color: rgba(200, 200, 200, 0.975);
+        }
+
+        body {
+            font-size: 1.25em;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        #result {
+            border: 1px solid white;
+            border-radius: 0.25rem;
+            width: 40vw;
+            min-width: 400px;
+            height: 75vh;
+            min-height: 300px; 
+        }
+
+        button {
+            font-size: 1.2rem;
+            height: 2.5rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+    <script src="./node_modules/axios/dist/axios.min.js"></script>
+    <script>
+        function sendGraphqlRequest(_data) {
+            return axios({
+                method: "POST", // GraphQL必須使用POST請求
+                url: "http://localhost:3456/graphql",
+                data: _data,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(res => {
+                console.log(res)
+                return res.data
+            }).catch(err => {
+                console.error(err)
+            })
+        }
+
+        // 取得所有文章
+        document.querySelector("#get_all_btn").addEventListener("click", () => {
+            sendGraphqlRequest({
+                query: `query getAllArticles {
+                    articles {
+                        id,
+                        title,
+                        content,
+                        tagList
+                    }
+                }`
+            }).then((res) => document.querySelector("#result").innerHTML = JSON.stringify(res, null, 2))
+        })
+        
+        // 用ID取得文章
+        document.querySelector("#get_btn").addEventListener("click", () => {
+            const _id = prompt("id=?")
+            sendGraphqlRequest({
+                // query: `query getArticle {
+                //     article(id: ${_id}) {
+                //         id,
+                //         title,
+                //         content,
+                //         tagList
+                //     }
+                // }`
+                query: `query getArticle($id: ID!) {
+                    article(id: $id) {
+                        id,
+                        title,
+                        content,
+                        tagList
+                    }
+                }`,
+                variables: {
+                    id: _id
+                }
+            }).then((res) => document.querySelector("#result").innerHTML = JSON.stringify(res, null, 2))
+        })
+        
+        // 建立新文章
+        document.querySelector("#create_btn").addEventListener("click", () => {
+            const _title = prompt("title=?")
+            const _content = prompt("content=?")
+
+            sendGraphqlRequest({
+                // query: `mutation createArticle($title: String!, $content: String!) {
+                //     createArticle(article: { title: $title, content: $content }) {
+                //         id,
+                //         title,
+                //         content,
+                //         tagList
+                //     }
+                // }`,
+                query: `mutation createArticle($article: CreateArticleInput!) {
+                    createArticle(article: $article) {
+                        id,
+                        title,
+                        content,
+                        tagList
+                    }
+                }`,
+                variables: {
+                    article: {
+                        title: _title,
+                        content: _content,
+                    },
+                }
+            }).then((res) => document.querySelector("#result").innerHTML = JSON.stringify(res, null, 2))
+        })
+    
+        // 更新文章
+        document.querySelector("#update_btn").addEventListener("click", () => {
+            const _id = prompt("id=?")
+            const _title = prompt("title=?")
+            const _content = prompt("content=?")
+
+            sendGraphqlRequest({
+                query: `mutation updateArticle($id: ID!, $article: UpdateArticleInput!) {
+                    updateArticle(id: $id, article: $article) {
+                        id,
+                        title,
+                        content,
+                        tagList
+                    }
+                }`,
+                variables: {
+                    id: _id,
+                    article: {
+                        title: _title,
+                        content: _content,
+                    }
+                }
+            }).then((res) => document.querySelector("#result").innerHTML = JSON.stringify(res, null, 2))
+        })
+        
+        // 刪除文章
+        document.querySelector("#delete_btn").addEventListener("click", () => {
+            const _id = prompt("id=?")
+
+            sendGraphqlRequest({
+                query: `mutation deleteArticle($id: ID!) {
+                    deleteArticle(id: $id) {
+                        success
+                    }
+                }`,
+                variables: {
+                    id: _id
+                }
+            }).then((res) => document.querySelector("#result").innerHTML = JSON.stringify(res, null, 2))
+        })
+    </script>
+</body>
+</html>
