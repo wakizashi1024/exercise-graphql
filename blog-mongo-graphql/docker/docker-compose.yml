@@ -1,0 +1,18 @@
+version: '3'
+services:
+  mongo:
+    network_mode: bridge
+    ports:
+      - '27017:27017'
+    image: mongo
+    container_name: mongo_db
+    restart: always
+    logging:
+      options:
+        max-size: 25m
+        max-file: 2
+    volumes:
+      - ./db:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
+      - MONGO_INITDB_ROOT_PASSWORD=123456
