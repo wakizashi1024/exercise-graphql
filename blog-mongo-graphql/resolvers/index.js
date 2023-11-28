@@ -26,7 +26,7 @@ const resolvers = {
             const { userId } = jwt.decode(token);
             const userData = await dataSources.users.findByUserId(userId);
             if (!userData) {
-                throw new UserInputError("User not found");
+                throw new AuthorizationError("User not found");
             }
 
             return userData.toObject();
