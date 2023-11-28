@@ -20,7 +20,7 @@ const resolvers = {
             
             // 驗證Token是否正確
             if(!jwt.verify(token, jwtSecret)) {
-                throw new AuthorizationError("Token expired or invalid");
+                throw new AuthenticationError("Token expired or invalid");
             };
 
             const { userId } = jwt.decode(token);
