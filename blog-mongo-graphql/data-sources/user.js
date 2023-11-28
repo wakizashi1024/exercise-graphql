@@ -32,6 +32,14 @@ class Users extends MongoDataSource {
         const user = new this.model(args);
         return user.save();
     }
+
+    updateUser(userId, data) {
+        return this.model.findOneAndUpdate(
+            { _id: userId }, 
+            data,
+            { new: true } // 預設回傳舊資料(更新前的資料)
+        );
+    }
 }
 
 export { Users };

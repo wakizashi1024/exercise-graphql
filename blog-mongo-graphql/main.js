@@ -11,7 +11,7 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 
-import { typeDefs, resolvers } from "./schema.js";
+import { typeDefs, resolvers, schema } from "./schema.js";
 import dataSources from "./data-sources/index.js";
 
 // 建立Express實例
@@ -22,8 +22,9 @@ const httpServer = http.createServer(app);
 
 // 建立ApolloServer實例
 const apolloServer = new ApolloServer({
-    typeDefs,
-    resolvers,
+    // typeDefs,
+    // resolvers,
+    schema,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
 });
 
@@ -36,7 +37,7 @@ app.use(
     cors(),
     express.json(),
     expressMiddleware(apolloServer, {
-        context: async ({ req }) => ({ 
+        context: async ({ req }) => ({
             token: req.headers.authorization?.replace("Bearer ", ""),
             dataSources: dataSources,
         }),

@@ -1,5 +1,10 @@
 import SHA256 from "crypto-js/sha256.js";
-import { UserInputError, ForbiddenError, AuthenticationError, AuthorizationError } from "../errors/index.js";
+import {
+    UserInputError,
+    ForbiddenError,
+    AuthenticationError,
+    AuthorizationError,
+} from "../errors/index.js";
 import jwt from "jsonwebtoken";
 
 const { JWT_SECRET: jwtSecret } = process.env;
@@ -7,30 +12,12 @@ const { JWT_SECRET: jwtSecret } = process.env;
 const resolvers = {
     Query: {
         foo: (parent, args, context, info) => {
-            // console.log(context);
+            console.log(context);
             return "bar";
         },
-        // TODO: Implement schema directive to prevent redundancies
         currentUser: async (parent, args, context, info) => {
-            // 取得當前使用者Token
-            const { token, dataSources } = context;
-            if (!token) {
-                throw new AuthenticationError("Please login first");
-            }
-            
-            // 驗證Token是否正確
-            if(!jwt.verify(token, jwtSecret)) {
-                throw new AuthenticationError("Token expired or invalid");
-            };
-
-            const { userId } = jwt.decode(token);
-            const userData = await dataSources.users.findByUserId(userId);
-            if (!userData) {
-                throw new AuthorizationError("User not found");
-            }
-
-            return userData.toObject();
-        }
+            return context.user;
+        },
     },
     Mutation: {
         async register(parent, args, context, info) {
@@ -70,24 +57,25 @@ const resolvers = {
             const { dataSources } = context;
 
             // 取出對應的使用者資料
-            const userData = await dataSources.users.findByEmail(user.email, { withPassword: true });
+            const userData = await dataSources.users.findByEmail(user.email, {
+                withPassword: true,
+            });
             if (!userData) {
                 throw new AuthenticationError("User is not exists");
             }
 
             // 比對密碼是否正確
-            console.log(userData.toObject())
-            if (SHA256(user.password).toString() !== userData.password) { // TODO: Move to utils
+            console.log(userData.toObject());
+            if (SHA256(user.password).toString() !== userData.password) {
+                // TODO: Move to utils
                 throw new AuthenticationError("Password is not correct");
             }
 
             // TODO: Move to utils
             // 產生token
-            const token = await jwt.sign(
-                { userId: userData._id },
-                jwtSecret,
-                { expiresIn: 60 * 60 * 24 }
-            );
+            const token = await jwt.sign({ userId: userData._id }, jwtSecret, {
+                expiresIn: 60 * 60 * 24,
+            });
 
             return {
                 user: {
@@ -95,7 +83,24 @@ const resolvers = {
                     token: token,
                 },
             };
-        }
+        },
+        async updateUser(parent, args, context, info) {
+            const { user: userInput } = args;
+            const { user, dataSources } = context;
+
+            // TODO: Move to utils
+            if (userInput.password) {
+                userInput.password = SHA256(userInput.password).toString();
+            }
+            const updatedUserData = await dataSources.users.updateUser(
+                user._id,
+                userInput
+            );
+
+            return {
+                user: updatedUserData.toObject(),
+            };
+        },
     },
 };
 
