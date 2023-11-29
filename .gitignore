@@ -5,3 +5,6 @@
 
 # mac
 **/.DS_store
+
+# env
+**/.env
